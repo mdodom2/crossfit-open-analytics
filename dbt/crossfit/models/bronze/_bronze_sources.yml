@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: crossfit_raw
+    database: CROSSFIT
+    schema: BRONZE
+    tables:
+      - name: OPEN_LEADERBOARD_RAW
+        description: "Raw CrossFit Open leaderboard payloads loaded from API pages into Snowflake Bronze."

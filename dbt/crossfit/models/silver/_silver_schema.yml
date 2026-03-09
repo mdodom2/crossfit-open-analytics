@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: silver_open_leaderboard
+    description: "Flattened and standardized athlete-level leaderboard data for the CrossFit Open."
+    columns:
+      - name: competition_key
+        description: "Business key for a competition slice based on year, division, scaled, and region."
+        tests:
+          - not_null
+
+      - name: athlete_key
+        description: "Business key for athlete based on competitor_id."
+        tests:
+          - not_null
+
+      - name: competitor_id
+        description: "Source athlete identifier from CrossFit API."
+        tests:
+          - not_null
+
+      - name: competitor_name
+        description: "Full competitor name from source payload."
+
+      - name: overall_rank
+        description: "Athlete overall rank within competition slice."
+
+      - name: overall_score
+        description: "Athlete overall score within competition slice."
+
+      - name: affiliate_id
+        description: "Affiliate business key from source, null when no affiliate is present."
+
+      - name: region_id
+        description: "Region identifier from source."
+
+      - name: country_code
+        description: "Country of origin code from source."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in the source landing table."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in the source landing table."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in this target model."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in this target model."
