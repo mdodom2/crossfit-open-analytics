@@ -1,0 +1,213 @@
+version: 2
+
+models:
+  - name: gold_dim_competition
+    description: "Competition dimension for unique CrossFit Open leaderboard slices."
+    columns:
+      - name: competition_sk
+        description: "Surrogate key for competition dimension."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_key
+        description: "Business key for competition slice."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_year
+        description: "Competition year."
+
+      - name: competition_division
+        description: "Raw division code from source."
+
+      - name: competition_scaled
+        description: "Raw scaled flag from source."
+
+      - name: competition_region
+        description: "Raw region code from source."
+
+      - name: competition_type
+        description: "Competition type label."
+
+      - name: division_name
+        description: "Business-friendly division description."
+
+      - name: gender_category
+        description: "Gender grouping derived from division."
+
+      - name: division_category
+        description: "Division family such as Open or Masters."
+
+      - name: scaled_name
+        description: "Business-friendly scaled description."
+
+      - name: is_scaled
+        description: "Boolean scaled indicator."
+
+      - name: region_name
+        description: "Business-friendly region description."
+
+      - name: competition_name
+        description: "Display-friendly competition label."
+
+  - name: gold_dim_workout
+    description: "Workout dimension for CrossFit Open workouts within competition slices."
+    columns:
+      - name: workout_sk
+        description: "Surrogate key for workout dimension."
+        tests:
+          - not_null
+          - unique
+
+      - name: workout_key
+        description: "Business key for workout within a competition slice."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_key
+        description: "Competition slice business key."
+        tests:
+          - not_null
+
+      - name: workout_number
+        description: "Workout ordinal from the source payload."
+        tests:
+          - not_null
+
+      - name: workout_name
+        description: "Human-readable workout label."
+
+  - name: gold_dim_athlete
+    description: "Athlete dimension for CrossFit Open leaderboard participants."
+    columns:
+      - name: athlete_sk
+        description: "Surrogate key for athlete dimension."
+        tests:
+          - not_null
+          - unique
+
+      - name: athlete_key
+        description: "Business key for athlete, based on competitor identifier."
+        tests:
+          - not_null
+          - unique
+
+      - name: competitor_id
+        description: "Source competitor identifier."
+
+      - name: competitor_name
+        description: "Full competitor display name."
+
+      - name: first_name
+        description: "Competitor first name."
+
+      - name: last_name
+        description: "Competitor last name."
+
+      - name: gender
+        description: "Competitor gender from source payload."
+
+      - name: age
+        description: "Competitor age from source payload."
+
+      - name: height
+        description: "Competitor height from source payload."
+
+      - name: weight
+        description: "Competitor weight from source payload."
+
+      - name: affiliate_id
+        description: "Affiliate identifier associated with the competitor."
+
+      - name: affiliate_name
+        description: "Affiliate name associated with the competitor."
+
+      - name: region_id
+        description: "Region identifier for the competitor."
+
+      - name: region_name
+        description: "Region name for the competitor."
+
+      - name: country_code
+        description: "Country code for the competitor."
+
+      - name: country_name
+        description: "Country name for the competitor."
+
+      - name: entrant_division_id
+        description: "Division id carried on the entrant payload."
+
+      - name: athlete_status
+        description: "Competitor status from source payload."
+
+      - name: team_captain
+        description: "Indicator for whether competitor is marked as team captain."
+
+      - name: profile_pic_s3_key
+        description: "Profile image S3 key from source payload."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
+
+  - name: gold_dim_division
+    description: "Lookup dimension for CrossFit division codes."
+    columns:
+      - name: division_sk
+        description: "Surrogate key for division dimension."
+        tests:
+          - not_null
+          - unique
+      - name: division_id
+        description: "Raw division code."
+        tests:
+          - not_null
+          - unique
+      - name: division_name
+        description: "Human-readable division label."
+
+  - name: gold_dim_scaled_type
+    description: "Lookup dimension for Rx versus Scaled."
+    columns:
+      - name: scaled_type_sk
+        description: "Surrogate key for scaled type dimension."
+        tests:
+          - not_null
+          - unique
+      - name: scaled_id
+        description: "Raw scaled code."
+        tests:
+          - not_null
+          - unique
+      - name: scaled_type_name
+        description: "Human-readable scaled type label."
+
+  - name: gold_dim_region
+    description: "Lookup dimension for competition and entrant region codes."
+    columns:
+      - name: region_sk
+        description: "Surrogate key for region dimension."
+        tests:
+          - not_null
+          - unique
+      - name: region_id
+        description: "Raw region code."
+        tests:
+          - not_null
+          - unique
+      - name: region_name
+        description: "Human-readable region label."

@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: gold_fct_open_workout_scores
+    description: "Fact table containing one row per athlete, competition slice, and workout result."
+    columns:
+      - name: workout_score_sk
+        description: "Surrogate key for the workout score fact row."
+        tests:
+          - not_null
+          - unique
+
+      - name: athlete_sk
+        description: "Foreign key to gold_dim_athlete."
+        tests:
+          - not_null
+
+      - name: competition_sk
+        description: "Foreign key to gold_dim_competition."
+        tests:
+          - not_null
+
+      - name: workout_sk
+        description: "Foreign key to gold_dim_workout."
+        tests:
+          - not_null
+
+      - name: overall_rank
+        description: "Athlete overall rank within the competition slice."
+
+      - name: overall_score
+        description: "Athlete overall score within the competition slice."
+
+      - name: workout_rank
+        description: "Rank for the individual workout result."
+
+      - name: workout_score_raw
+        description: "Raw workout score value from source."
+
+      - name: workout_score_display
+        description: "Human-readable workout score display from source."
+
+      - name: is_valid
+        description: "Whether the workout result is marked valid."
+
+      - name: has_video
+        description: "Whether the workout result has an associated video."
+
+      - name: judge_user_id
+        description: "Judge user identifier from source payload."
+
+      - name: affiliate_name
+        description: "Affiliate name associated with the workout submission."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in the gold fact table."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in the gold fact table."

@@ -94,6 +94,9 @@ cleaned_data AS (
         leaderboard_row:entrant:age::NUMBER(38,0) as age,
         TRIM(leaderboard_row:entrant:height::VARCHAR) as height,
         TRIM(leaderboard_row:entrant:weight::VARCHAR) as weight,
+        NULLIF(TRIM(leaderboard_row:entrant:status::VARCHAR), '') as status,
+        leaderboard_row:entrant:teamCaptain::VARCHAR as team_captain,
+        NULLIF(TRIM(leaderboard_row:entrant:profilePicS3key::VARCHAR), '') as profile_pic_s3_key,
 
         -- affiliate / geography
         NULLIF(leaderboard_row:entrant:affiliateId::VARCHAR, 'None') as affiliate_id,

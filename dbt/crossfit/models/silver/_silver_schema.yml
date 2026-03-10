@@ -51,3 +51,77 @@ models:
 
       - name: UPD_TS
         description: "Timestamp when record was updated in this target model."
+
+  - name: silver_open_workout_scores
+    description: "Flattened workout-level score records from the CrossFit Open leaderboard payload."
+    columns:
+      - name: athlete_workout_key
+        description: "Business key for one athlete-workout record within a competition slice."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_key
+        description: "Business key for a competition slice based on year, division, scaled, and region."
+        tests:
+          - not_null
+
+      - name: athlete_key
+        description: "Business key for athlete based on competitor_id."
+        tests:
+          - not_null
+
+      - name: workout_key
+        description: "Business key for workout within a competition slice."
+        tests:
+          - not_null
+
+      - name: workout_number
+        description: "Workout ordinal from the API payload."
+        tests:
+          - not_null
+
+      - name: workout_rank
+        description: "Athlete rank for the workout."
+
+      - name: workout_score_raw
+        description: "Raw encoded score value from the API payload."
+
+      - name: workout_score_display
+        description: "Human-readable display value for the workout score."
+
+      - name: time_seconds
+        description: "Workout completion time in seconds when supplied."
+
+      - name: score_identifier
+        description: "Source score identifier from the API payload."
+
+      - name: judge_name
+        description: "Judge name associated with the workout submission."
+
+      - name: judge_user_id
+        description: "Judge user identifier from the source payload."
+
+      - name: is_valid
+        description: "Whether the workout score is marked valid in the source payload."
+
+      - name: has_video
+        description: "Whether the workout score has an associated video flag."
+
+      - name: workout_breakdown
+        description: "Detailed breakdown text for the workout result."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in the source landing table."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in the source landing table."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in this target model."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in this target model."
