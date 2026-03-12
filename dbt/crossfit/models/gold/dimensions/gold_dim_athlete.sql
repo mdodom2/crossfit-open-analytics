@@ -25,7 +25,7 @@ WITH base AS (
         country_code,
         country_name,
         entrant_division_id,
-        athlete_status,
+        status as athlete_status,
         team_captain,
         profile_pic_s3_key,
         SRC_CRT_TS,
@@ -48,7 +48,6 @@ deduped AS (
 )
 
 SELECT
-
     {{ dbt_utils.generate_surrogate_key(['competitor_id']) }} as athlete_sk,
 
     competitor_id as athlete_key,

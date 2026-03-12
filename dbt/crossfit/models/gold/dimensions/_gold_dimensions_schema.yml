@@ -211,3 +211,40 @@ models:
           - unique
       - name: region_name
         description: "Human-readable region label."
+
+  - name: gold_dim_date
+    description: "Conformed date dimension used for filtering and time-based analysis across CrossFit analytics models."
+
+    columns:
+      - name: date_sk
+        description: "Surrogate key generated from calendar_date."
+        tests:
+          - not_null
+          - unique
+
+      - name: calendar_date
+        description: "Actual calendar date."
+        tests:
+          - not_null
+          - unique
+
+      - name: year
+        description: "Calendar year extracted from calendar_date."
+
+      - name: month
+        description: "Calendar month number (1–12)."
+
+      - name: day
+        description: "Day of the month."
+
+      - name: day_name
+        description: "Name of the day of the week."
+
+      - name: month_name
+        description: "Name of the month."
+
+      - name: CRT_TS
+        description: "Timestamp when the record was created in the warehouse."
+
+      - name: UPD_TS
+        description: "Timestamp when the record was last updated."

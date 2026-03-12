@@ -66,3 +66,29 @@ models:
 
       - name: UPD_TS
         description: "Timestamp when record was updated in the gold fact table."
+
+  - name: gold_fct_open_leaderboard
+    description: "Fact table for CrossFit Open leaderboard results"
+    
+    columns:
+      - name: leaderboard_sk
+        description: "Primary surrogate key for leaderboard record"
+        tests:
+          - not_null
+          - unique
+
+      - name: athlete_sk
+        description: "Foreign key to athlete dimension"
+        tests:
+          - not_null
+
+      - name: competition_sk
+        description: "Foreign key to competition dimension"
+        tests:
+          - not_null
+
+      - name: overall_rank
+        description: "Final leaderboard rank"
+
+      - name: overall_score
+        description: "Total score across all workouts"
