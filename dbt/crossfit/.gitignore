@@ -2,3 +2,6 @@
 target/
 dbt_packages/
 logs/
+snowflake_*.pem
+snowflake_*.p8
+snowflake_*.pub
