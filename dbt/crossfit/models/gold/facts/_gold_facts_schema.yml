@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: gold_fct_open_workout_scores
-    description: "Fact table containing one row per athlete, competition slice, and workout result."
+    description: "Atomic event-level fact table capturing athlete workout performance for the CrossFit Open. Each row represents a single athlete result for a specific workout within a competition context. This is the foundational fact in the gold layer and supports downstream aggregates such as the leaderboard."
     columns:
       - name: workout_score_sk
         description: "Surrogate key for the workout score fact row."
@@ -26,10 +26,10 @@ models:
           - not_null
 
       - name: overall_rank
-        description: "Athlete overall rank within the competition slice."
+        description: "Athlete overall rank within the competition slice, carried from source for downstream leaderboard derivation."
 
       - name: overall_score
-        description: "Athlete overall score within the competition slice."
+        description: "Athlete overall score within the competition slice, carried from source for downstream leaderboard derivation."
 
       - name: workout_rank
         description: "Rank for the individual workout result."
@@ -53,10 +53,10 @@ models:
         description: "Affiliate name associated with the workout submission."
 
       - name: SRC_CRT_TS
-        description: "Timestamp when record was created in source landing process."
+        description: "Timestamp when record was created in the source landing process."
 
       - name: SRC_UPD_TS
-        description: "Timestamp when record was updated in source landing process."
+        description: "Timestamp when record was updated in the source landing process."
 
       - name: SRC_SYS
         description: "Source system identifier."
@@ -67,28 +67,42 @@ models:
       - name: UPD_TS
         description: "Timestamp when record was updated in the gold fact table."
 
-  - name: gold_fct_open_leaderboard
-    description: "Fact table for CrossFit Open leaderboard results"
-    
+  - name: gold_agg_open_leaderboard
+    description: "Derived aggregate table representing rolled-up CrossFit Open leaderboard results. Each row represents one athlete within one competition slice and is sourced from the atomic workout event fact."
     columns:
       - name: leaderboard_sk
-        description: "Primary surrogate key for leaderboard record"
+        description: "Primary surrogate key for the leaderboard record."
         tests:
           - not_null
           - unique
 
       - name: athlete_sk
-        description: "Foreign key to athlete dimension"
+        description: "Foreign key to gold_dim_athlete."
         tests:
           - not_null
 
       - name: competition_sk
-        description: "Foreign key to competition dimension"
+        description: "Foreign key to gold_dim_competition."
         tests:
           - not_null
 
       - name: overall_rank
-        description: "Final leaderboard rank"
+        description: "Final leaderboard rank for the athlete within the competition slice."
 
       - name: overall_score
-        description: "Total score across all workouts"
+        description: "Total competition score for the athlete within the competition slice."
+
+      - name: SRC_CRT_TS
+        description: "Earliest source create timestamp represented in the aggregated leaderboard record."
+
+      - name: SRC_UPD_TS
+        description: "Latest source update timestamp represented in the aggregated leaderboard record."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in the gold aggregate table."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in the gold aggregate table."

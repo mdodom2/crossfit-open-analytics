@@ -1,3 +1,27 @@
+{#
+  Model: gold_fct_open_workout_scores.sql
+  Description:
+    Atomic event-level fact table capturing athlete workout performance
+    for the CrossFit Open. Each row represents a single athlete''s result
+    for a specific workout within a competition context.
+
+    This is the foundational fact in the gold layer and is used to derive
+    downstream aggregates such as the open leaderboard.
+
+  Owner: Matthew Odom
+  Materialization: table
+  Grain: one row per athlete per competition per workout
+
+  Dependencies:
+    - {{ ref('silver_open_workout_scores') }}
+    - {{ ref('gold_dim_athlete') }}
+    - {{ ref('gold_dim_competition') }}
+    - {{ ref('gold_dim_workout') }}
+
+  Create Date: 2026-03-09
+  Last Modified: 2026-03-19
+#}
+
 {{
     config(
         materialized='table',
@@ -6,24 +30,33 @@
     )
 }}
 
+-- Atomic event-level fact table capturing athlete workout performance.
+-- This model represents the core business event and serves as the
+-- foundation for downstream aggregates such as leaderboard rankings.
+
 WITH base AS (
 
     SELECT
         athlete_key,
         competition_key,
         workout_key,
+
         overall_rank,
         overall_score,
+
         workout_rank,
         workout_score_raw,
         workout_score_display,
+
         is_valid,
         has_video,
         judge_user_id,
         affiliate_name,
+
         SRC_CRT_TS,
         SRC_UPD_TS,
         SRC_SYS
+
     FROM {{ ref('silver_open_workout_scores') }}
 
 ),
@@ -37,9 +70,11 @@ joined AS (
 
         b.overall_rank,
         b.overall_score,
+
         b.workout_rank,
         b.workout_score_raw,
         b.workout_score_display,
+
         b.is_valid,
         b.has_video,
         b.judge_user_id,
@@ -60,36 +95,44 @@ joined AS (
     LEFT JOIN {{ ref('gold_dim_workout') }} w
         ON b.workout_key = w.workout_key
 
+),
+
+final AS (
+
+    SELECT
+        {{ dbt_utils.generate_surrogate_key(
+            ['athlete_sk','competition_sk','workout_sk']
+        ) }} AS workout_score_sk,
+
+        athlete_sk,
+        competition_sk,
+        workout_sk,
+
+        overall_rank,
+        overall_score,
+
+        workout_rank,
+        workout_score_raw,
+        workout_score_display,
+
+        is_valid,
+        has_video,
+        judge_user_id,
+        affiliate_name,
+
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS CRT_TS,
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS UPD_TS,
+
+        SRC_CRT_TS,
+        SRC_UPD_TS,
+        SRC_SYS
+
+    FROM joined
+    WHERE athlete_sk IS NOT NULL
+      AND competition_sk IS NOT NULL
+      AND workout_sk IS NOT NULL
+
 )
 
-SELECT
-    {{ dbt_utils.generate_surrogate_key(
-        ['athlete_sk','competition_sk','workout_sk']
-    ) }} AS workout_score_sk,
-
-    athlete_sk,
-    competition_sk,
-    workout_sk,
-
-    overall_rank,
-    overall_score,
-    workout_rank,
-    workout_score_raw,
-    workout_score_display,
-
-    is_valid,
-    has_video,
-    judge_user_id,
-    affiliate_name,
-
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS CRT_TS,
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS UPD_TS,
-
-    SRC_CRT_TS,
-    SRC_UPD_TS,
-    SRC_SYS
-
-FROM joined
-WHERE athlete_sk IS NOT NULL
-AND competition_sk IS NOT NULL
-AND workout_sk IS NOT NULL
+SELECT *
+FROM final
