@@ -1,161 +1,115 @@
+
 # CrossFit Open Analytics — dbt + Snowflake
 
 ## Overview
 
 This project demonstrates a modern analytics engineering pipeline built using **Snowflake and dbt** to transform CrossFit Open leaderboard data into an analytics-ready model.
 
-Raw CrossFit Open API payloads are ingested into Snowflake and transformed through a layered architecture into a **dimensional star schema** that supports performance analysis, competition insights, and leaderboard reporting.
+Raw CrossFit Open API payloads are ingested into Snowflake and transformed through a **Bronze → Silver → Gold medallion architecture** into a dimensional star schema that supports performance analysis, competition insights, and leaderboard reporting.
 
-The project emphasizes **clear data lineage, atomic modeling, and derived aggregates**, following modern best practices in analytics engineering.
+The project emphasizes **clear data lineage, modular modeling, atomic facts, and derived aggregates**, following modern analytics engineering best practices.
 
 ---
 
 ## Project Objective
 
-The objective of this project is to transform **raw CrossFit Open leaderboard API data** into a clean, reliable analytical model capable of answering key performance questions:
+Transform raw CrossFit Open leaderboard data into a model that answers:
 
-- Who wins each division of the CrossFit Open?
-- How consistent are top-performing athletes across workouts?
-- Which workouts create the greatest separation between competitors?
-- How competitive are different divisions?
-
-These questions are answered through a **dimensional model built in dbt and visualized in Snowflake dashboards**.
+- Who wins each division?
+- How consistent are top athletes?
+- Which workouts create the most separation?
+- How competitive are divisions?
 
 ---
 
 ## Modeling Approach
 
-This project follows modern analytics engineering principles by clearly separating:
-
 ### Atomic Facts vs Derived Aggregates
 
-- **Atomic facts** capture data at the lowest level of granularity  
-- **Aggregates** are derived from atomic facts, not sourced directly  
-
-### Design Principles
-
-- Build facts at the **event level (lowest grain)**
-- Derive business-level outputs (like leaderboards) from those facts
-- Maintain **traceability back to source data**
-- Avoid duplicating business logic across models
+- Atomic facts = lowest grain (event-level)
+- Aggregates = derived from facts
+- Dimensions = reusable context
 
 ### Implementation
 
-- `gold_fct_open_workout_scores` → atomic workout-level fact  
-- `gold_agg_open_leaderboard` → derived leaderboard aggregate  
-
-This ensures:
-- flexibility for new analyses  
-- consistency across metrics  
-- a scalable and maintainable model  
+- `gold_fct_open_workout_scores` → atomic fact  
+- `gold_agg_open_leaderboard` → derived aggregate  
 
 ---
 
 ## Architecture Overview
 
-The pipeline follows a **Medallion Architecture (Bronze → Silver → Gold)**:
-
 ```mermaid
 flowchart LR
+A[API Payload] --> B[Bronze]
 
-A[CrossFit Open API Payload] --> B[Bronze Layer\nbronze_crossfit__open_leaderboard_raw]
+B --> C1[Silver Base]
+C1 --> C2[Athlete]
+C1 --> C3[Competition]
+C1 --> C4[Division]
+C1 --> C5[Region]
+C1 --> C6[Scaled]
+C1 --> C7[Date]
 
-B --> C[Silver Layer\nsilver_open_leaderboard]
-B --> D[Silver Layer\nsilver_open_workout_scores]
+B --> C8[Workout Scores]
+C8 --> C9[Workout]
 
-C --> E[Gold Dimensions\nathlete\ncompetition\nworkout\ndivision\nscaled_type\nregion\ndate]
+C2 --> D1[Dim Athlete]
+C3 --> D2[Dim Competition]
+C4 --> D3[Dim Division]
+C5 --> D4[Dim Region]
+C6 --> D5[Dim Scaled]
+C7 --> D6[Dim Date]
+C9 --> D7[Dim Workout]
 
-D --> F[Gold Fact\nfct_open_workout_scores]
+D1 --> E[Fact]
+D2 --> E
+D3 --> E
+D4 --> E
+D5 --> E
+D6 --> E
+D7 --> E
 
-F --> G[Gold Aggregate\nagg_open_leaderboard]
-
-E --> H[Snowflake Dashboard]
-F --> H
-G --> H
+E --> F[Aggregate]
 ```
 
 ---
 
 ## Bronze Layer
 
-### Model
 - `bronze_crossfit__open_leaderboard_raw`
-
-### Purpose
-
-- Store raw API payloads exactly as received  
-- Preserve full data lineage  
-- Capture ingestion metadata  
-- Enable replayability  
 
 ---
 
 ## Silver Layer
 
-### Models
-- `silver_open_leaderboard`
+### Base
+- `silver_open_leaderboard_base`
+
+### Entities
+- `silver_athlete`
+- `silver_competition`
+- `silver_date`
+- `silver_division`
+- `silver_region`
+- `silver_scaled_type`
+- `silver_workout`
+
+### Transactional
 - `silver_open_workout_scores`
-
-### Purpose
-
-- Flatten nested JSON structures  
-- Normalize athlete and workout records  
-- Standardize business keys  
-- Apply data type transformations  
-- Prepare data for dimensional modeling  
 
 ---
 
 ## Gold Layer
 
-The Gold layer provides a **dimensional star schema** optimized for analytics.
+### Dimensions
+- athlete, competition, division, region, scaled type, workout, date
 
----
-
-### Dimension Tables
-
-- `gold_dim_athlete`
-- `gold_dim_competition`
-- `gold_dim_workout`
-- `gold_dim_division`
-- `gold_dim_scaled_type`
-- `gold_dim_region`
-- `gold_dim_date`
-
-These dimensions provide reusable attributes for analysis across facts.
-
----
-
-### Fact & Aggregate Tables
-
-#### gold_fct_open_workout_scores
-
-Atomic fact table representing workout-level athlete performance.
-
-**Grain**
-- one row per athlete + competition slice + workout
-
-**Use Cases**
-- analyze workout performance  
-- evaluate athlete consistency  
-- compare performance across workouts  
-
----
-
-#### gold_agg_open_leaderboard
-
-Derived aggregate representing final leaderboard results.
-
-**Grain**
-- one row per athlete + competition slice
-
-**Derived From**
+### Fact
 - `gold_fct_open_workout_scores`
 
-**Use Cases**
-- determine competition winners  
-- analyze final rankings  
-- compare divisions and performance tiers  
+### Aggregate
+- `gold_agg_open_leaderboard`
 
 ---
 
@@ -163,26 +117,10 @@ Derived aggregate representing final leaderboard results.
 
 | Model | Grain |
 |------|------|
-| silver_open_leaderboard | one row per athlete per competition slice |
-| silver_open_workout_scores | one row per athlete + workout |
-| gold_dim_athlete | one row per athlete |
-| gold_dim_competition | one row per competition slice |
-| gold_dim_workout | one row per competition slice + workout |
-| gold_fct_open_workout_scores | one row per athlete + competition slice + workout |
-| gold_agg_open_leaderboard | one row per athlete + competition slice |
-
----
-
-## Data Modeling Guarantees
-
-The model enforces:
-
-- one record per athlete per workout in the atomic fact  
-- one record per athlete per competition slice in the aggregate  
-- no duplicate leaderboard records  
-- complete dimensional key coverage  
-
-These guarantees ensure consistency between workout-level and leaderboard-level analysis.
+| silver_open_leaderboard_base | athlete + competition |
+| silver_open_workout_scores | athlete + workout |
+| gold_fct_open_workout_scores | athlete + workout |
+| gold_agg_open_leaderboard | athlete + competition |
 
 ---
 
@@ -191,26 +129,22 @@ These guarantees ensure consistency between workout-level and leaderboard-level 
 ### Division
 
 | Code | Division |
-|----|----|
+|------|----------|
 | 1 | Men |
 | 2 | Women |
 | 18 | Men 35–39 |
 
----
-
 ### Scaled Type
 
 | Code | Meaning |
-|----|----|
+|------|--------|
 | 0 | Rx |
 | 1 | Scaled |
-
----
 
 ### Region
 
 | Code | Meaning |
-|----|----|
+|------|--------|
 | 0 | Worldwide |
 
 ---
@@ -230,20 +164,19 @@ Tests validate:
 ## Example Transformation Flow
 
 ```
-Raw API Payload
-      ↓
-bronze_crossfit__open_leaderboard_raw
-      ↓
-silver_open_leaderboard
-silver_open_workout_scores
-      ↓
-gold_dim_* tables
-      ↓
-gold_fct_open_workout_scores
-      ↓
-gold_agg_open_leaderboard
-      ↓
-Snowflake Dashboard
+API Payload
+  ↓
+Bronze Raw
+  ↓
+Silver Base + Entities
+  ↓
+Silver Workout Scores
+  ↓
+Gold Dimensions
+  ↓
+Gold Fact
+  ↓
+Gold Aggregate
 ```
 
 ---
@@ -294,12 +227,11 @@ Example:
 
 ## Technologies Used
 
-- Snowflake  
-- dbt  
-- SQL  
-- Medallion Architecture  
-- Dimensional Modeling  
-- Star Schema Design  
+- Snowflake
+- dbt
+- SQL
+- Medallion Architecture
+- Dimensional Modeling
 
 ---
 
@@ -316,7 +248,7 @@ dbt docs serve
 
 ---
 
-## How to Run the Project
+## How to Run
 
 ```bash
 dbt deps
@@ -324,9 +256,10 @@ dbt run
 dbt test
 ```
 
-To run specific models:
+Run specific models:
 
 ```bash
+dbt run --select silver_open_workout_scores
 dbt run --select gold_fct_open_workout_scores
 dbt run --select gold_agg_open_leaderboard
 ```
