@@ -1,16 +1,32 @@
+{#
+  Model: gold_dim_athlete.sql
+  Description:
+    Gold dimension for CrossFit Open athletes.
+
+  Grain:
+    one row per athlete
+#}
+
 {{
     config(
         materialized='table',
-        alias='gold_dim_athlete',
-        tags=['dimension','athlete']
+        alias='dim_athlete'
     )
 }}
 
 WITH base AS (
 
+    SELECT *
+    FROM {{ ref('silver_athlete') }}
+
+),
+
+final AS (
+
     SELECT
-        competitor_id,
+        {{ dbt_utils.generate_surrogate_key(['athlete_key']) }} AS athlete_sk,
         athlete_key,
+        competitor_id,
         competitor_name,
         first_name,
         last_name,
@@ -25,55 +41,17 @@ WITH base AS (
         country_code,
         country_name,
         entrant_division_id,
-        status as athlete_status,
+        athlete_status,
         team_captain,
         profile_pic_s3_key,
         SRC_CRT_TS,
         SRC_UPD_TS,
-        SRC_SYS
-    FROM {{ ref('silver_open_leaderboard') }}
-    WHERE competitor_id IS NOT NULL
-
-),
-
-deduped AS (
-
-    SELECT *
+        SRC_SYS,
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS CRT_TS,
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS UPD_TS
     FROM base
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY competitor_id
-        ORDER BY SRC_UPD_TS DESC, SRC_CRT_TS DESC
-    ) = 1
 
 )
 
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['competitor_id']) }} as athlete_sk,
-
-    competitor_id as athlete_key,
-    competitor_id,
-    competitor_name,
-    first_name,
-    last_name,
-    gender,
-    age,
-    height,
-    weight,
-    affiliate_id,
-    affiliate_name,
-    region_id,
-    region_name,
-    country_code,
-    country_name,
-    entrant_division_id,
-    athlete_status,
-    team_captain,
-    profile_pic_s3_key,
-
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as CRT_TS,
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as UPD_TS,
-    SRC_CRT_TS,
-    SRC_UPD_TS,
-    SRC_SYS
-
-FROM deduped
+SELECT *
+FROM final

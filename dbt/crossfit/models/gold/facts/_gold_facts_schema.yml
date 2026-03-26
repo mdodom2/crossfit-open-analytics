@@ -4,8 +4,8 @@ models:
   - name: gold_fct_open_workout_scores
     description: "Atomic event-level fact table capturing athlete workout performance for the CrossFit Open. Each row represents a single athlete result for a specific workout within a competition context. This is the foundational fact in the gold layer and supports downstream aggregates such as the leaderboard."
     columns:
-      - name: workout_score_sk
-        description: "Surrogate key for the workout score fact row."
+      - name: athlete_workout_sk
+        description: "Surrogate key for the athlete-workout fact row."
         tests:
           - not_null
           - unique
@@ -25,11 +25,26 @@ models:
         tests:
           - not_null
 
+      - name: athlete_key
+        description: "Business key for athlete."
+
+      - name: competition_key
+        description: "Business key for competition slice."
+
+      - name: workout_key
+        description: "Business key for workout."
+
+      - name: athlete_workout_key
+        description: "Business key for the athlete-workout grain."
+
       - name: overall_rank
         description: "Athlete overall rank within the competition slice, carried from source for downstream leaderboard derivation."
 
       - name: overall_score
         description: "Athlete overall score within the competition slice, carried from source for downstream leaderboard derivation."
+
+      - name: workout_number
+        description: "Workout ordinal from source."
 
       - name: workout_rank
         description: "Rank for the individual workout result."
@@ -40,6 +55,12 @@ models:
       - name: workout_score_display
         description: "Human-readable workout score display from source."
 
+      - name: time_seconds
+        description: "Workout time in seconds when present."
+
+      - name: score_identifier
+        description: "Score identifier from source payload."
+
       - name: is_valid
         description: "Whether the workout result is marked valid."
 
@@ -49,7 +70,10 @@ models:
       - name: judge_user_id
         description: "Judge user identifier from source payload."
 
-      - name: affiliate_name
+      - name: judge_name
+        description: "Judge name from source payload."
+
+      - name: workout_affiliate_name
         description: "Affiliate name associated with the workout submission."
 
       - name: SRC_CRT_TS

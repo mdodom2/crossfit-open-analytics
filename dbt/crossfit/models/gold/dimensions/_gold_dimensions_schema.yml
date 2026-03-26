@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: gold_dim_competition
-    description: "Competition dimension for unique CrossFit Open leaderboard slices."
+    description: "Competition dimension for unique CrossFit Open competition slices."
     columns:
       - name: competition_sk
         description: "Surrogate key for competition dimension."
@@ -28,29 +28,20 @@ models:
       - name: competition_region
         description: "Raw region code from source."
 
-      - name: competition_type
-        description: "Competition type label."
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
 
-      - name: division_name
-        description: "Business-friendly division description."
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
 
-      - name: gender_category
-        description: "Gender grouping derived from division."
+      - name: SRC_SYS
+        description: "Source system identifier."
 
-      - name: division_category
-        description: "Division family such as Open or Masters."
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
 
-      - name: scaled_name
-        description: "Business-friendly scaled description."
-
-      - name: is_scaled
-        description: "Boolean scaled indicator."
-
-      - name: region_name
-        description: "Business-friendly region description."
-
-      - name: competition_name
-        description: "Display-friendly competition label."
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
 
   - name: gold_dim_workout
     description: "Workout dimension for CrossFit Open workouts within competition slices."
@@ -77,8 +68,32 @@ models:
         tests:
           - not_null
 
-      - name: workout_name
-        description: "Human-readable workout label."
+      - name: competition_year
+        description: "Competition year associated with the workout."
+
+      - name: competition_division
+        description: "Division code associated with the workout's competition slice."
+
+      - name: competition_scaled
+        description: "Scaled code associated with the workout's competition slice."
+
+      - name: competition_region
+        description: "Region code associated with the workout's competition slice."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
 
   - name: gold_dim_athlete
     description: "Athlete dimension for CrossFit Open leaderboard participants."
@@ -172,13 +187,27 @@ models:
         tests:
           - not_null
           - unique
+
       - name: division_id
         description: "Raw division code."
         tests:
           - not_null
           - unique
-      - name: division_name
-        description: "Human-readable division label."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
 
   - name: gold_dim_scaled_type
     description: "Lookup dimension for Rx versus Scaled."
@@ -188,13 +217,33 @@ models:
         tests:
           - not_null
           - unique
+
+      - name: scaled_type_key
+        description: "Business key for the scaled type."
+        tests:
+          - not_null
+          - unique
+
       - name: scaled_id
         description: "Raw scaled code."
         tests:
           - not_null
           - unique
-      - name: scaled_type_name
-        description: "Human-readable scaled type label."
+
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
 
   - name: gold_dim_region
     description: "Lookup dimension for competition and entrant region codes."
@@ -204,17 +253,38 @@ models:
         tests:
           - not_null
           - unique
+
+      - name: region_key
+        description: "Business key for region."
+        tests:
+          - not_null
+          - unique
+
       - name: region_id
         description: "Raw region code."
         tests:
           - not_null
-          - unique
+
       - name: region_name
         description: "Human-readable region label."
 
+      - name: SRC_CRT_TS
+        description: "Timestamp when record was created in source landing process."
+
+      - name: SRC_UPD_TS
+        description: "Timestamp when record was updated in source landing process."
+
+      - name: SRC_SYS
+        description: "Source system identifier."
+
+      - name: CRT_TS
+        description: "Timestamp when record was created in gold dimension."
+
+      - name: UPD_TS
+        description: "Timestamp when record was updated in gold dimension."
+
   - name: gold_dim_date
     description: "Conformed date dimension used for filtering and time-based analysis across CrossFit analytics models."
-
     columns:
       - name: date_sk
         description: "Surrogate key generated from calendar_date."
@@ -232,7 +302,7 @@ models:
         description: "Calendar year extracted from calendar_date."
 
       - name: month
-        description: "Calendar month number (1–12)."
+        description: "Calendar month number (1-12)."
 
       - name: day
         description: "Day of the month."

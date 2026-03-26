@@ -1,54 +1,41 @@
+{#
+  Model: gold_dim_region.sql
+  Description:
+    Gold dimension for regions.
+
+  Grain:
+    one row per region
+#}
+
 {{
     config(
         materialized='table',
-        alias='gold_dim_region',
-        tags=['dimension','region']
+        alias='dim_region'
     )
 }}
 
-WITH source_values AS (
+WITH base AS (
 
-    SELECT DISTINCT
-        competition_region as region_id,
-        CASE
-            WHEN competition_region = 0 THEN 'Worldwide'
-            ELSE NULL
-        END as region_name
-    FROM {{ ref('silver_open_leaderboard') }}
-
-    UNION
-
-    SELECT DISTINCT
-        TRY_TO_NUMBER(region_id) as region_id,
-        region_name
-    FROM {{ ref('silver_open_leaderboard') }}
-    WHERE region_id IS NOT NULL
+    SELECT *
+    FROM {{ ref('silver_region') }}
 
 ),
 
-deduped AS (
+final AS (
 
     SELECT
+        {{ dbt_utils.generate_surrogate_key(['region_key']) }} AS region_sk,
+        region_key,
         region_id,
-        region_name
-    FROM source_values
-    WHERE region_id IS NOT NULL
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY region_id
-        ORDER BY CASE WHEN region_name IS NOT NULL THEN 1 ELSE 2 END
-    ) = 1
+        region_name,
+        SRC_CRT_TS,
+        SRC_UPD_TS,
+        SRC_SYS,
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS CRT_TS,
+        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS UPD_TS
+    FROM base
 
 )
 
-SELECT
-    {{ dbt_utils.generate_surrogate_key(['region_id']) }} as region_sk,
-    region_id,
-    COALESCE(region_name, CONCAT('Region ', region_id)) as region_name,
-
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as CRT_TS,
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as UPD_TS,
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as SRC_CRT_TS,
-    CURRENT_TIMESTAMP()::TIMESTAMP_NTZ as SRC_UPD_TS,
-    'crossfit_lookup' as SRC_SYS
-
-FROM deduped
+SELECT *
+FROM final

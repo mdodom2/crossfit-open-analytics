@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: silver_open_leaderboard
-    description: "Flattened and standardized athlete-level leaderboard data for the CrossFit Open."
+  - name: silver_open_leaderboard_base
+    description: "Flattened and standardized athlete-level leaderboard data expanded from the raw CrossFit Open payload. This model acts as a reusable silver base for downstream silver entity models."
     columns:
       - name: competition_key
         description: "Business key for a competition slice based on year, division, scaled, and region."
@@ -29,7 +29,7 @@ models:
         description: "Athlete overall score within competition slice."
 
       - name: affiliate_id
-        description: "Affiliate business key from source, null when no affiliate is present."
+        description: "Affiliate identifier from source, null when no affiliate is present."
 
       - name: region_id
         description: "Region identifier from source."
@@ -47,10 +47,10 @@ models:
         description: "Source system identifier."
 
       - name: CRT_TS
-        description: "Timestamp when record was created in this target model."
+        description: "Timestamp when record was created in this silver base model."
 
       - name: UPD_TS
-        description: "Timestamp when record was updated in this target model."
+        description: "Timestamp when record was updated in this silver base model."
 
   - name: silver_open_workout_scores
     description: "Flattened workout-level score records from the CrossFit Open leaderboard payload."
@@ -125,3 +125,103 @@ models:
 
       - name: UPD_TS
         description: "Timestamp when record was updated in this target model."
+
+  - name: silver_region
+    description: "Silver entity model representing one unique region per row."
+    columns:
+      - name: region_key
+        description: "Business key for region."
+        tests:
+          - not_null
+          - unique
+
+      - name: region_id
+        description: "Region identifier from source."
+
+      - name: region_name
+        description: "Region name from source."
+
+  - name: silver_division
+    description: "Silver entity model representing one unique division per row."
+    columns:
+      - name: division_id
+        description: "Division identifier standardized from competition or entrant context."
+        tests:
+          - not_null
+          - unique
+
+  - name: silver_scaled_type
+    description: "Silver entity model representing one unique scaled type per row."
+    columns:
+      - name: scaled_type_key
+        description: "Business key for scaled type."
+        tests:
+          - not_null
+          - unique
+
+      - name: scaled_id
+        description: "Scaled type identifier from source."
+
+  - name: silver_athlete
+    description: "Silver entity model representing one unique athlete per row."
+    columns:
+      - name: athlete_key
+        description: "Business key for athlete."
+        tests:
+          - not_null
+          - unique
+
+      - name: competitor_id
+        description: "Source competitor identifier."
+
+      - name: competitor_name
+        description: "Full competitor display name."
+
+      - name: first_name
+        description: "Competitor first name."
+
+      - name: last_name
+        description: "Competitor last name."
+
+      - name: gender
+        description: "Competitor gender from source payload."
+
+  - name: silver_competition
+    description: "Silver entity model representing one unique competition slice per row."
+    columns:
+      - name: competition_key
+        description: "Business key for competition slice."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_year
+        description: "Competition year."
+
+      - name: competition_division
+        description: "Division code associated with the competition slice."
+
+      - name: competition_scaled
+        description: "Scaled code associated with the competition slice."
+
+      - name: competition_region
+        description: "Region code associated with the competition slice."
+
+  - name: silver_workout
+    description: "Silver entity model representing one unique workout within a competition slice per row."
+    columns:
+      - name: workout_key
+        description: "Business key for workout within a competition slice."
+        tests:
+          - not_null
+          - unique
+
+      - name: competition_key
+        description: "Business key for competition slice."
+        tests:
+          - not_null
+
+      - name: workout_number
+        description: "Workout ordinal within the competition slice."
+        tests:
+          - not_null

@@ -4,6 +4,10 @@
     Silver model that flattens raw leaderboardRows into one typed row per athlete per
     competition slice, with standardized business keys and audit columns.
 
+    TODO: Transitional model retained temporarily during refactor.
+    Downstream silver models are being updated to source directly from bronze
+    to align with medallion best practices and avoid silver-on-silver dependencies.
+
   Owner: Matthew Odom
   Materialization: view
   Refresh Cadence: On demand
@@ -23,7 +27,7 @@
 {{
     config(
         materialized='view',
-        alias='open_leaderboard'
+        alias='silver_open_leaderboard_base'
     )
 }}
 

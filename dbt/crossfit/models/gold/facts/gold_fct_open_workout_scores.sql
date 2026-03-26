@@ -1,136 +1,138 @@
 {#
   Model: gold_fct_open_workout_scores.sql
   Description:
-    Atomic event-level fact table capturing athlete workout performance
-    for the CrossFit Open. Each row represents a single athlete''s result
-    for a specific workout within a competition context.
+    Gold fact table representing athlete performance at the workout level
+    for the CrossFit Open.
 
-    This is the foundational fact in the gold layer and is used to derive
-    downstream aggregates such as the open leaderboard.
-
-  Owner: Matthew Odom
-  Materialization: table
-  Grain: one row per athlete per competition per workout
+  Grain:
+    One row per athlete per workout per competition slice.
 
   Dependencies:
     - {{ ref('silver_open_workout_scores') }}
-    - {{ ref('gold_dim_athlete') }}
-    - {{ ref('gold_dim_competition') }}
-    - {{ ref('gold_dim_workout') }}
 
-  Create Date: 2026-03-09
-  Last Modified: 2026-03-19
+  Notes:
+    - No dependency on gold dimensions for population
+    - Surrogate keys derived from business keys
+    - Designed for downstream joins to dimensions
 #}
 
 {{
     config(
         materialized='table',
-        alias='gold_fct_open_workout_scores',
-        tags=['fact','workout']
+        alias='fct_open_workout_scores'
     )
 }}
 
--- Atomic event-level fact table capturing athlete workout performance.
--- This model represents the core business event and serves as the
--- foundation for downstream aggregates such as leaderboard rankings.
-
 WITH base AS (
 
-    SELECT
-        athlete_key,
-        competition_key,
-        workout_key,
-
-        overall_rank,
-        overall_score,
-
-        workout_rank,
-        workout_score_raw,
-        workout_score_display,
-
-        is_valid,
-        has_video,
-        judge_user_id,
-        affiliate_name,
-
-        SRC_CRT_TS,
-        SRC_UPD_TS,
-        SRC_SYS
-
+    SELECT *
     FROM {{ ref('silver_open_workout_scores') }}
-
-),
-
-joined AS (
-
-    SELECT
-        a.athlete_sk,
-        c.competition_sk,
-        w.workout_sk,
-
-        b.overall_rank,
-        b.overall_score,
-
-        b.workout_rank,
-        b.workout_score_raw,
-        b.workout_score_display,
-
-        b.is_valid,
-        b.has_video,
-        b.judge_user_id,
-        b.affiliate_name,
-
-        b.SRC_CRT_TS,
-        b.SRC_UPD_TS,
-        b.SRC_SYS
-
-    FROM base b
-
-    LEFT JOIN {{ ref('gold_dim_athlete') }} a
-        ON b.athlete_key = a.athlete_key
-
-    LEFT JOIN {{ ref('gold_dim_competition') }} c
-        ON b.competition_key = c.competition_key
-
-    LEFT JOIN {{ ref('gold_dim_workout') }} w
-        ON b.workout_key = w.workout_key
 
 ),
 
 final AS (
 
     SELECT
-        {{ dbt_utils.generate_surrogate_key(
-            ['athlete_sk','competition_sk','workout_sk']
-        ) }} AS workout_score_sk,
 
-        athlete_sk,
-        competition_sk,
-        workout_sk,
+        -- ========================
+        -- SURROGATE KEYS (derived)
+        -- ========================
+        {{ dbt_utils.generate_surrogate_key(['athlete_key']) }}        AS athlete_sk,
+        {{ dbt_utils.generate_surrogate_key(['competition_key']) }}    AS competition_sk,
+        {{ dbt_utils.generate_surrogate_key(['workout_key']) }}        AS workout_sk,
+        {{ dbt_utils.generate_surrogate_key(['athlete_workout_key']) }} AS athlete_workout_sk,
 
+        -- ========================
+        -- BUSINESS KEYS
+        -- ========================
+        athlete_key,
+        competition_key,
+        workout_key,
+        athlete_workout_key,
+        affiliate_key,
+        region_key,
+        country_key,
+        division_key,
+
+        -- ========================
+        -- COMPETITION CONTEXT
+        -- ========================
+        competition_year,
+        competition_division,
+        competition_scaled,
+        competition_region,
+
+        -- ========================
+        -- ATHLETE ATTRIBUTES (denormalized for performance)
+        -- ========================
+        competitor_id,
+        competitor_name,
+        first_name,
+        last_name,
+        gender,
+        age,
+        height,
+        weight,
+
+        affiliate_id,
+        affiliate_name,
+        region_id,
+        region_name,
+        country_code,
+        country_name,
+        entrant_division_id,
+
+        -- ========================
+        -- OVERALL PERFORMANCE
+        -- ========================
         overall_rank,
         overall_score,
+        next_stage,
 
+        -- ========================
+        -- WORKOUT PERFORMANCE
+        -- ========================
+        workout_number,
         workout_rank,
         workout_score_raw,
         workout_score_display,
+        time_seconds,
+        score_identifier,
 
+        -- ========================
+        -- VALIDATION / JUDGING
+        -- ========================
+        judge_name,
+        judge_user_id,
+        heat,
+        lane,
+        workout_affiliate_name,
+
+        -- ========================
+        -- FLAGS
+        -- ========================
         is_valid,
         has_video,
-        judge_user_id,
-        affiliate_name,
+        is_scaled_workout,
 
-        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS CRT_TS,
-        CURRENT_TIMESTAMP()::TIMESTAMP_NTZ AS UPD_TS,
+        -- ========================
+        -- DESCRIPTIVE
+        -- ========================
+        workout_breakdown,
+        mobile_score_display,
 
+        source_page,
+
+        -- ========================
+        -- AUDIT
+        -- ========================
         SRC_CRT_TS,
         SRC_UPD_TS,
-        SRC_SYS
+        SRC_SYS,
+        CRT_TS,
+        UPD_TS
 
-    FROM joined
-    WHERE athlete_sk IS NOT NULL
-      AND competition_sk IS NOT NULL
-      AND workout_sk IS NOT NULL
+    FROM base
 
 )
 
