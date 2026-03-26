@@ -39,38 +39,70 @@ Transform raw CrossFit Open leaderboard data into a model that answers:
 
 ## Architecture Overview
 
+
 ```mermaid
 flowchart LR
-A[API Payload] --> B[Bronze]
 
-B --> C1[Silver Base]
-C1 --> C2[Athlete]
-C1 --> C3[Competition]
-C1 --> C4[Division]
-C1 --> C5[Region]
-C1 --> C6[Scaled]
-C1 --> C7[Date]
+A[CrossFit Open API Payload]
+B[bronze_crossfit__open_leaderboard_raw]
 
-B --> C8[Workout Scores]
-C8 --> C9[Workout]
+SB[silver_open_leaderboard_base]
+SS[silver_open_workout_scores]
 
-C2 --> D1[Dim Athlete]
-C3 --> D2[Dim Competition]
-C4 --> D3[Dim Division]
-C5 --> D4[Dim Region]
-C6 --> D5[Dim Scaled]
-C7 --> D6[Dim Date]
-C9 --> D7[Dim Workout]
+SA[silver_athlete]
+SC[silver_competition]
+SDIV[silver_division]
+SR[silver_region]
+SST[silver_scaled_type]
+SDATE[silver_date]
+SW[silver_workout]
 
-D1 --> E[Fact]
-D2 --> E
-D3 --> E
-D4 --> E
-D5 --> E
-D6 --> E
-D7 --> E
+GDA[gold_dim_athlete]
+GDC[gold_dim_competition]
+GDDIV[gold_dim_division]
+GDR[gold_dim_region]
+GDST[gold_dim_scaled_type]
+GDDATE[gold_dim_date]
+GDW[gold_dim_workout]
 
-E --> F[Aggregate]
+GF[gold_fct_open_workout_scores]
+GA[gold_agg_open_leaderboard]
+DASH[Snowflake Dashboards / Analytics]
+
+A --> B
+
+B --> SB
+B --> SS
+
+SB --> SA
+SB --> SC
+SB --> SDIV
+SB --> SR
+SB --> SST
+SB --> SDATE
+
+SS --> SW
+
+SA --> GDA
+SC --> GDC
+SDIV --> GDDIV
+SR --> GDR
+SST --> GDST
+SDATE --> GDDATE
+SW --> GDW
+
+SS --> GF
+GDA --> GF
+GDC --> GF
+GDDIV --> GF
+GDR --> GF
+GDST --> GF
+GDDATE --> GF
+GDW --> GF
+
+GF --> GA
+GF --> DASH
+GA --> DASH
 ```
 
 ---
